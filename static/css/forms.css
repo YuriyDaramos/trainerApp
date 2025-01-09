@@ -1,0 +1,69 @@
+/* Стиль для формы */
+form {
+    background-color: var(--form-background);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    max-width: 400px;
+    margin: auto;
+}
+
+/* Стиль для лейблов */
+form label {
+    color: var(--text-color);
+    font-weight: bold;
+    margin-bottom: 5px;
+    margin-left: 2px;
+    display: inline-block;
+}
+
+/* Стиль для лейбла "Delete user" */
+.delete-user-label {
+    color: var(--text-color);
+    font-weight: normal;
+    margin-bottom: 4px;
+    display: inline-block;
+}
+
+/* Стиль для инпутов */
+form input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #444;
+    background-color: #333;
+    color: var(--text-color);
+    box-sizing: border-box;
+    margin-bottom: 15px;
+}
+
+form input:focus {
+    border-color: var(--highlight-color);
+    outline: none;
+}
+
+/* Стиль для чекбоксов */
+form input[type="checkbox"] {
+    display: inline-block;
+    width: auto;
+    margin-right: 20px;
+}
+
+/* Стиль для кнопки */
+form button {
+    width: 100%;
+    height: 40px;
+    padding: 8px;
+    background-color: var(--highlight-color);
+    color: var(--text-color);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    box-sizing: border-box;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+form button:hover {
+    background-color: #45a049;
+}

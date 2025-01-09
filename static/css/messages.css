@@ -1,0 +1,29 @@
+/* Общий стиль для сообщений */
+.message {
+    padding: 10px;
+    border-radius: 5px;
+    margin: 15px auto;
+    max-width: 400px;
+    text-align: center;
+}
+
+/* Стиль для сообщений об ошибках */
+.message.error {
+    background-color: #222;
+    color: red;
+    border: 1px solid red;
+}
+
+/* Стиль для успешных сообщений */
+.message.success {
+    background-color: #222;
+    color: green;
+    border: 1px solid green;
+}
+
+/* Стиль для предупреждений */
+.message.warning {
+    background-color: #222;
+    color: orange;
+    border: 1px solid orange;
+}

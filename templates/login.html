@@ -4,10 +4,15 @@
 
 {% block content %}
 
-    <h3>Log in</h3>
+    <h2>Log in</h2>
 
     <form action="{% url "user_login" %}" method="POST">
         {% csrf_token %}
+
+        {% if error %}
+            <p class="message error">{{ error }}</p>
+        {% endif %}
+
         <label for="username">Username:</label>
         <input type="text" name="username" id="username" required>
         <br>
@@ -19,13 +24,9 @@
         <button type="submit">Login</button>
         <br>
 
-        <br><p style="color: gray">Testing features:</p>
-        <label style="color: gray" for="delete_user">Delete user (password must be valid):</label>
+        <br><p>Testing features:</p>
+        <label for="delete_user" class="delete-user-label">Delete user (password must be valid):</label>
         <input type="checkbox" name="delete_user" id="delete_user" placeholder="username">
     </form>
-
-    {% if error %}
-        <p style="color: red">{{ error }}</p>
-    {% endif %}
 
 {% endblock %}

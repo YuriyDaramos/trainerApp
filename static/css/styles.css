@@ -1,0 +1,55 @@
+@import "header.css";
+@import "footer.css";
+@import "messages.css";
+@import "forms.css";
+
+/* Цвета для темной темы */
+:root {
+    --background-color: #212121; /* почти черный, немного мягче */
+    --text-color: #f4f4f4; /* светлый, но не белый */
+    --header-background: #303030; /* темный фон для хедера */
+    --link-color: #ff7f50; /* коралловый, ассоциируется с энергией, спортом */
+    --highlight-color: #4caf50; /* зеленый, акцент для успешных действий (регистрация, вход) */
+    --footer-background: #303030; /* фон для футера */
+    --form-background: #2c2c2c; /* фон для форм, чтобы они не сливались с фоном */
+}
+
+/* Общий стиль для body */
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    margin: 0;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    font-family: Arial, sans-serif;
+}
+
+/* Стиль для ссылок */
+a {
+    color: var(--link-color);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Стиль для заголовков */
+h3, h2, h1 {
+    color: var(--text-color);
+    text-align: center;
+}
+
+/* Стиль для основной части */
+main {
+    flex-grow: 1;
+    margin: 20px;
+}
+
+/* Стиль для параграфов */
+form p {
+    margin-top: 20px;
+    font-size: 14px;
+    color: var(--text-color);
+}
