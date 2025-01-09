@@ -6,7 +6,7 @@
 
     <h2>Register</h2>
 
-    <form action="{% url "user_register" %}" method="POST">
+    <form action="{% url 'user_register' %}" method="POST" id="registrationForm">
         {% csrf_token %}
 
         <label for="username">Username (login):</label>
@@ -34,10 +34,28 @@
         <br>
 
         <button type="submit">Register</button>
+
+        <p id="passwordError" class="message error" style="display: none;">Passwords do not match!</p>
     </form>
 
     {% if error %}
-        <p style="color: red">{{ error }}</p>
+        <p class="message error">{{ error }}</p>
     {% endif %}
+
+    <script>
+        document.getElementById('registrationForm').addEventListener('submit', function(event) {
+            var password = document.getElementById('password').value;
+            var passwordConf = document.getElementById('password_conf').value;
+
+            var errorMessage = document.getElementById('passwordError');
+
+            if (password !== passwordConf) {
+                errorMessage.style.display = 'block';  // Показать сообщение об ошибке
+                event.preventDefault();  // Не отправлять форму
+            } else {
+                errorMessage.style.display = 'none';  // Скрыть сообщение об ошибке, если пароли совпадают
+            }
+        });
+    </script>
 
 {% endblock %}
