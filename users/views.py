@@ -27,11 +27,11 @@ def login_page(request):
             if delete_user:
                 user = User.objects.get(username=username)
                 user.delete()
-                return render(request, "login.html", {"error": f"User '{username}' deleted"})
+                return render(request, "index.html", {"warning": f"User '{username}' deleted"})
             # --- for testing only ---
 
             login(request, user)
-            return HttpResponse("Login success!")
+            return render(request, "index.html", {"success": f"Log in success! Welcome, {username}."})
         else:
             return render(request, "login.html", {"error": "Invalid username or password"})
 
@@ -40,9 +40,9 @@ def logout_page(request):
     if request.user.is_authenticated:
         username = request.user.username
         logout(request)
-        return HttpResponse(f"Logout success! Goodbye, {username}.")
+        return render(request, "index.html", {"success": f"Log out success! Goodbye, {username}."})
     else:
-        return HttpResponse("Log in first")
+        return render(request, "index.html", {"warning": f"Log in first."})
 
 
 def register_page(request):
@@ -57,4 +57,5 @@ def register_page(request):
         password = request.POST.get("password")
         user = User.objects.create_user(username, email, password, first_name=first_name, last_name=last_name)
         user.save()
-        return HttpResponse(f"Registration success! Hello, {username}!")
+        login(request, user)
+        return render(request, "index.html", {"success": f"Registrations success! Welcome, {username}."})
