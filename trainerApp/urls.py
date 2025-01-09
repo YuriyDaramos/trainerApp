@@ -18,8 +18,10 @@ from django.contrib import admin
 from django.urls import path, include
 
 import users.views
+from trainerApp import views
 
 urlpatterns = [
+    path("", views.index, name="index"),
     path("admin/", admin.site.urls),
     path("register/", users.views.register_page, name="user_register"),
     path("login/", users.views.login_page, name="user_login"),

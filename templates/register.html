@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Registration{% endblock %}
+
+{% block content %}
+
+    <h3>Register</h3>
+
+    <form action="{% url "user_register" %}" method="POST">
+        {% csrf_token %}
+
+        <label for="username">Username (login):</label>
+        <input type="text" id="username" name="username" required>
+        <br>
+
+        <label for="first_name">First name:</label>
+        <input type="text" id="first_name" name="first_name" required>
+        <br>
+
+        <label for="last_name">Last name:</label>
+        <input type="text" id="last_name" name="last_name" required>
+        <br>
+
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
+        <br>
+
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+        <br>
+
+        <label for="password_conf">Confirm password:</label>
+        <input type="password" id="password_conf" name="password_conf" required>
+        <br>
+
+        <button type="submit">Register</button>
+    </form>
+
+    {% if error %}
+        <p style="color: red">{{ error }}</p>
+    {% endif %}
+
+{% endblock %}
