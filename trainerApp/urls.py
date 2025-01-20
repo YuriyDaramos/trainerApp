@@ -30,4 +30,5 @@ urlpatterns = [
     path("user/", include(("users.urls", "users"), namespace="users")),
     path("booking/", include(("booking.urls", "booking"), namespace="booking")),
     path("trainer/", include(("trainer.urls", "trainer"), namespace="trainer")),
+    path("hot_change_group/", views.hot_change_group, name="hot_change_group"),
 ]

@@ -1,5 +1,5 @@
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.http import HttpResponse
 from django.shortcuts import render
 
@@ -56,6 +56,14 @@ def register_page(request):
         email = request.POST.get("email")
         password = request.POST.get("password")
         user = User.objects.create_user(username, email, password, first_name=first_name, last_name=last_name)
+
+        is_trainer = request.POST.get("is_trainer") == 'on'
+        group_name = "Trainer" if is_trainer else "User"
+        group = Group.objects.get(name=group_name)
+        user.groups.add(group)
+
         user.save()
+
         login(request, user)
-        return render(request, "index.html", {"success": f"Registrations success! Welcome, {username}."})
+        user_role = user.groups.first().name
+        return render(request, "index.html", {"success": f"Registrations success! Welcome, {username}. Your role: {user_role}."})

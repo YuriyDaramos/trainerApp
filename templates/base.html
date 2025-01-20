@@ -27,6 +27,17 @@
     </main>
 
     <footer>
+        <p>Username: {{ request.user.username }}</p>
+        {% if request.user.groups.first %}
+            <p>Group: {{ request.user.groups.first.name }}</p>
+            <form action="{% url 'hot_change_group' %}" method="POST">
+                {% csrf_token %}
+                <button type="submit">Switch Role</button>
+            </form>
+        {% else %}
+            No group assigned
+        {% endif %}
+
         <p>&copy; 2025 trainerAPP</p>
     </footer>
 </body>

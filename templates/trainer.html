@@ -14,7 +14,7 @@
 
     <br><h2>Add Trainer Service</h2>
 
-    <form action="{% url 'trainer:service_page' %}" method="POST">
+    <form action="{% url 'trainer:service_page' trainer_id=trainer_id %}" method="POST">
         {% csrf_token %}
         <div>
             <br>Category:
