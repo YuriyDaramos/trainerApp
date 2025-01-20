@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Trainer{% endblock %}
+
+{% block content %}
+
+    <h2>My Services</h2>
+        {% for service in trainer_services %}
+            <br>Category: {{ service.category.name }}
+            <br>Price: {{ service.price }} USD
+            <br>Duration: {{ service.duration }} (hh:mm:ss)
+            <br>Level: {{ service.level }}
+        {% endfor %}
+
+    <br><h2>Add Trainer Service</h2>
+
+    <form action="{% url 'trainer:service_page' %}" method="POST">
+        {% csrf_token %}
+        <div>
+            <br>Category:
+                <select name="category">
+                    {% for category in service_categories %}
+                        <option value="{{ category.id }}">{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+            <br><br>Duration (minutes): <input type="text" name="duration">
+            <br>Price (USD): <input type="number" name="price">
+            <br>Level: <select name="level">
+                <option value="1">Novice</option>
+                <option value="2">Medium</option>
+                <option value="3">Advanced</option>
+                </select>
+            <br><button type="submit">Submit</button>
+        </div>
+    </form>
+
+{% endblock %}
