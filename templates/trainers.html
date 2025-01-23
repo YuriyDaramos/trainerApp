@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}All Trainers{% endblock %}
+
+{% block content %}
+
+    <h2>All Trainers</h2>
+
+    <form method="get">
+        <label for="category">Filter by category:</label>
+        <select name="category" id="category" onchange="this.form.submit()">
+            <option value="all" {% if not selected_category or selected_category == 'all' %}selected{% endif %}>All categories</option>
+            {% for category in categories %}
+                <option value="{{ category.id }}" {% if selected_category|default:'' == category.id|stringformat:"s" %}selected{% endif %}>
+                    {{ category.name }}
+                </option>
+            {% endfor %}
+        </select>
+    </form>
+
+    {% if page_obj %}
+        {% for trainer in page_obj %}
+            <p>
+                <a href="{% url 'trainer:trainer_detail' trainer.id %}">{{ trainer.username }}</a>
+            </p>
+        {% endfor %}
+    {% else %}
+        <p>No trainers found.</p>
+    {% endif %}
+
+    <!-- Pagination -->
+    <div>
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page=1{% if selected_category %}&category={{ selected_category }}{% endif %}">&laquo; first</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}">previous</a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}">next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% if selected_category %}&category={{ selected_category }}{% endif %}">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+
+{% endblock %}

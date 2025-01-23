@@ -27,8 +27,10 @@ urlpatterns = [
     path("register/", users.views.register_page, name="user_register"),
     path("login/", users.views.login_page, name="user_login"),
     path("logout/", users.views.logout_page, name="user_logout"),
-    path("user/", include(("users.urls", "users"), namespace="users")),
+    path("users/", include(("users.urls", "users"), namespace="users")),
     path("booking/", include(("booking.urls", "booking"), namespace="booking")),
     path("trainer/", include(("trainer.urls", "trainer"), namespace="trainer")),
+
+    # for testing
     path("hot_change_group/", views.hot_change_group, name="hot_change_group"),
 ]

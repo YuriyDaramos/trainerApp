@@ -1,33 +1,32 @@
 {% extends "base.html" %}
 
-{% block title %}Trainer{% endblock %}
+{% block title %}Service{% endblock %}
 
 {% block content %}
 
-    {% if trainer_id == request.user.id %}
-        <h2>My Services</h2>
-    {% else %}
-        <h2>{{ trainer.first_name }} {{ trainer.last_name }} Services</h2>
-    {% endif %}
+    <h2>{{ service.category.name}}</h2>
 
-    <br>-------------------------
-    <br>Trainers working hours: ....
-    <br>-------------------------
-    <br>
 
-        {% for service in trainer_services %}
-            <br>Category: {{ service.category.name }}
             <br>Price: {{ service.price }} USD
             <br>Duration: {{ service.duration }} (hh:mm:ss)
             <br>Level: {{ service.level }}
                 {% if not is_trainer %}
-                    <a href="{% url 'trainer:book_service' trainer_id=trainer_id service_id=service.id %}">Book</a>
+                    <form action="{% url 'trainer:book_service' trainer_id=service.trainer_id service_id=service.id %}" method="POST">
+                        {% csrf_token %}
+                        <div>
+                            <br>Booking time: <select name="booking_time">
+                                {% for time in possible_times %}
+                                    <option value="{{ time.0 }}">{{ time.0 }}</option>
+                                {% endfor %}
+                                </select>
+                            <br><button type="submit">Book</button>
+                        </div>
+                    </form>
                 {% endif %}
             <br>-------------------------
-        {% endfor %}
 
     {% if is_trainer %}
-        <br><h2>Add Trainer Service</h2>
+        <br><h2>Edit Service !!! NOT WORKING !!!</h2>
 
         <form action="{% url 'trainer:service_page' trainer_id=trainer_id %}" method="POST">
             {% csrf_token %}
@@ -45,21 +44,6 @@
                     <option value="2">Medium</option>
                     <option value="3">Advanced</option>
                     </select>
-                <br><button type="submit">Submit</button>
-            </div>
-        </form>
-    {% endif %}
-
-    {% if is_trainer %}
-        <br><h2>Add Trainer Working Hours</h2>
-
-        <form action="{% url 'trainer:service_page' trainer_id=trainer_id %}" method="POST">
-            {% csrf_token %}
-            <div>
-                <br>Start Date & Time:
-                <input type="datetime-local" name="start_datetime">
-                <br>End Date & Time:
-                <input type="datetime-local" name="end_datetime">
                 <br><button type="submit">Submit</button>
             </div>
         </form>

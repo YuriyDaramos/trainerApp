@@ -1,15 +1,24 @@
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User, Group
+from django.core.paginator import Paginator
 from django.http import HttpResponse
 from django.shortcuts import render
 
 
-def user_page(request):
-    return HttpResponse("user_page")
+def users(request):
+    user_group = Group.objects.get(name="User")
+    users_data = User.objects.filter(groups=user_group)
+
+    paginator = Paginator(users_data, 20)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, "users.html", {"page_obj": page_obj})
 
 
-def specific_user_page(request, user_id):
-    return HttpResponse("specific_user_page")
+def user_details(request, user_id):
+    user_data = User.objects.get(id=user_id)
+    return render(request, "user_page.html", {"user": user_data})
 
 
 def login_page(request):

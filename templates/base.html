@@ -14,9 +14,16 @@
         <nav>
             <ul>
                 <li><a href="/">Home</a></li>
-                <li><a href="/register/">Registration</a></li>
-                <li><a href="/login/">Log in</a></li>
-                <li><a href="/logout/">Log out</a></li>
+
+                {% if request.user.is_authenticated %}
+                    <li><a href="/logout/">Log out</a></li>
+                    <li><a href="/users/">Users</a></li>
+                    <li><a href="/trainer/">Trainers</a></li>
+                    <li><a href="/users/{{ request.user.id }}">My Profile</a></li>
+                {% else %}
+                    <li><a href="/register/">Registration</a></li>
+                    <li><a href="/login/">Log in</a></li>
+                {% endif %}
             </ul>
         </nav>
     </header>
@@ -27,6 +34,7 @@
     </main>
 
     <footer>
+        *for testing*
         <p>Username: {{ request.user.username }}</p>
         {% if request.user.groups.first %}
             <p>Group: {{ request.user.groups.first.name }}</p>

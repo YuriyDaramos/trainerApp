@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}All users page{% endblock %}
+
+{% block content %}
+
+    <h2>All users page</h2>
+
+    {% for user in page_obj %}
+        <p><a href="{% url 'users:user_details' user.id %}">{{ user.username }}</a></p>
+    {% endfor %}
+
+    <!-- Pagination -->
+    <div>
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page=1">&laquo; first</a>
+                <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+
+
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}{{ user.username }} page{% endblock %}
+
+{% block content %}
+
+    <h2>{{ user.username }} profile</h2>
+    <br>User ID: {{ user.id }}
+    <br>First Name: {{ user.first_name }}
+    <br>Last Name: {{ user.last_name }}
+    <br>Email: {{ user.email }}
+    <br>Register Date: {{ user.date_joined }}
+
+    <br><br><h2>{{ user.username }} services</h2>
+
+
+{% endblock %}
