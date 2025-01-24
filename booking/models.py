@@ -5,8 +5,8 @@ from trainer.models import Service
 
 
 class Booking(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='bookings_as_user')
-    trainer = models.OneToOneField(User, on_delete=models.CASCADE, related_name='bookings_as_trainer')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bookings_as_user')
+    trainer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bookings_as_trainer')
     datetime_start = models.DateTimeField()
     datetime_end = models.DateTimeField()
     service = models.ForeignKey(Service, on_delete=models.CASCADE)
