@@ -21,7 +21,7 @@
             <br>Duration: {{ service.duration }} (hh:mm:ss)
             <br>Level: {{ service.level }}
                 {% if not is_trainer %}
-                    <a href="{% url 'trainer:book_service' trainer_id=trainer_id service_id=service.id %}">Book</a>
+                    <br><a href="{% url 'trainer:book_service' trainer_id=trainer_id service_id=service.id %}">Book</a>
                 {% endif %}
             <br>-------------------------
         {% endfor %}

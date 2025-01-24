@@ -6,24 +6,86 @@
 
     <h2>{{ service.category.name}}</h2>
 
-
             <br>Price: {{ service.price }} USD
             <br>Duration: {{ service.duration }} (hh:mm:ss)
             <br>Level: {{ service.level }}
-                {% if not is_trainer %}
-                    <form action="{% url 'trainer:book_service' trainer_id=service.trainer_id service_id=service.id %}" method="POST">
-                        {% csrf_token %}
-                        <div>
-                            <br>Booking time: <select name="booking_time">
-                                {% for time in possible_times %}
-                                    <option value="{{ time.0 }}">{{ time.0 }}</option>
+
+            {% if not is_trainer %}
+                <!-- Блок выбора даты и времени -->
+                <form action="{% url 'trainer:book_service' trainer_id=service.trainer_id service_id=service.id %}" method="POST" class="booking-form-hours">
+                    {% csrf_token %}
+                    <input type="hidden" name="date" value="{{ current_year }}-{{ current_month|stringformat:"02d" }}-{{ selected_day.day|stringformat:"02d" }}">
+                    <div>
+                        <h3>Booking Calendar</h3>
+                        <!-- Название месяца -->
+                        <h4>{{ current_month_name }} {{ current_year }}</h4>
+                        <!-- Таблица календаря -->
+                        <table border="1" cellspacing="0" cellpadding="5">
+                            <thead>
+                                <tr>
+                                    <th>Mon</th>
+                                    <th>Tue</th>
+                                    <th>Wed</th>
+                                    <th>Thu</th>
+                                    <th>Fri</th>
+                                    <th style="color: red;">Sat</th>
+                                    <th style="color: red;">Sun</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for week in calendar_rows %}
+                                <tr>
+                                    {% for day in week %}
+                                    <td>
+                                        {% if day.is_valid %}
+                                            {% if day.number == selected_day.day %}
+                                                <!-- Выделяем выбранный день -->
+                                                <a href="?date={{ current_year }}-{{ current_month|stringformat:"02d" }}-{{ day.number|stringformat:"02d" }}" style="color: blue; font-weight: bold;">
+                                                    {{ day.number }}
+                                                </a>
+                                            {% else %}
+                                                {% if day.is_holiday %}
+                                                    <span style="color: red;">{{ day.number }}</span>
+                                                {% elif day.is_unavailable %}
+                                                    <span style="color: gray;">{{ day.number }}</span>
+                                                {% else %}
+                                                    <a href="?date={{ current_year }}-{{ current_month|stringformat:"02d" }}-{{ day.number|stringformat:"02d" }}">
+                                                        {{ day.number }}
+                                                    </a>
+                                                {% endif %}
+                                            {% endif %}
+                                        {% endif %}
+                                    </td>
+                                    {% endfor %}
+                                </tr>
                                 {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {% if possible_times %}
+                        <div>
+                            <h4>Choose Time Interval</h4>
+                                <select name="booking_time">
+                                    {% for time in possible_times %}
+                                        <option value="{{ time.0|time:"H:i" }}-{{ time.1|time:"H:i" }}">
+                                            {{ time.0|time:"H:i" }} - {{ time.1|time:"H:i" }}
+                                        </option>
+                                    {% endfor %}
                                 </select>
-                            <br><button type="submit">Book</button>
                         </div>
-                    </form>
-                {% endif %}
+
+                        <br><button type="submit">Book</button>
+                    {% else %}
+                        <h4>No Possible Time To Book</h4>
+                    {% endif %}
+                </form>
+            {% endif %}
             <br>-------------------------
+
+
+
+
 
     {% if is_trainer %}
         <br><h2>Edit Service !!! NOT WORKING !!!</h2>

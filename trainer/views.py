@@ -2,10 +2,11 @@ from datetime import timedelta, datetime, time
 
 from django.contrib.auth.models import User, Group
 from django.core.paginator import Paginator
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import render, redirect
 
 import trainer.models
+from booking.models import Booking
 
 
 # Create your views here.
@@ -90,16 +91,70 @@ def service_page(request, trainer_id):
         return redirect(request.META.get("HTTP_REFERER", "/"))
 
 
-def book_service(request, trainer_id, service_id):
+def book_service(request, trainer_id, service_id, day=None):
     if request.method == "GET":
         if request.user.groups.filter(name="User").exists():
+            from trainer.utils import generate_actual_calendar, booking_time_discovery
+            import calendar
+
             service = trainer.models.Service.objects.filter(pk=service_id).first()
 
-            from trainer.utils import booking_time_discovery
-            today = datetime.today().date()
-            possible_times = booking_time_discovery(trainer_id, service_id, today)
-            return render(request, "service.html", {"service": service,
-                                                    "possible_times": possible_times})
+            date_param = request.GET.get("date")
+            if date_param:
+                date = datetime.strptime(date_param, "%Y-%m-%d").date()
+            else:
+                date = datetime.today().date()
+
+            current_month = int(request.GET.get("month", datetime.now().month))
+            current_year = int(request.GET.get("year", datetime.now().year))
+
+            min_date = datetime.today().date()
+            max_date = min_date + timedelta(days=90)
+            if (current_year, current_month) > (max_date.year, max_date.month):
+                current_year, current_month = max_date.year, max_date.month
+            if (current_year, current_month) < (min_date.year, min_date.month):
+                current_year, current_month = min_date.year, min_date.month
+
+            calendar_rows = generate_actual_calendar(current_year, current_month, date)
+
+            possible_times = booking_time_discovery(trainer_id, service_id, date)
+
+            return render(request, "service.html", {
+                "service": service,
+                "selected_day": date,
+                "calendar_rows": calendar_rows,
+                "current_month_name": calendar.month_name[current_month],
+                "current_year": current_year,
+                "current_month": current_month,
+                "possible_times": possible_times,
+            })
+
     if request.method == "POST":
-        service = trainer.models.Service.objects.filter(pk=service_id)
-        return render(request, "service.html", {"service": service})
+        if request.user.groups.filter(name="User").exists():
+            date = request.POST.get("date")
+            booking_time = request.POST.get("booking_time")
+
+            if booking_time:
+                time_start, time_end = booking_time.split("-")
+            else:
+                time_start = time_end = None
+
+            user = request.user
+            trainer_data = User.objects.get(id=trainer_id)
+            service = trainer.models.Service.objects.get(id=service_id)
+
+            datetime_start = datetime.combine(datetime.strptime(date, "%Y-%m-%d").date(),
+                                              datetime.strptime(time_start, "%H:%M").time())
+            datetime_end = datetime.combine(datetime.strptime(date, "%Y-%m-%d").date(),
+                                            datetime.strptime(time_end, "%H:%M").time())
+
+            booking = Booking.objects.create(
+                datetime_start=datetime_start,
+                datetime_end=datetime_end,
+                status=True,
+                service_id=service.id,
+                trainer_id=trainer_data.id,
+                user_id=user.id
+            )
+
+            return redirect("trainer:book_service", trainer_id=trainer_data.id, service_id=service.id)
