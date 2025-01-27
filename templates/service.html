@@ -16,6 +16,7 @@
                     {% csrf_token %}
                     <input type="hidden" name="date" value="{{ current_year }}-{{ current_month|stringformat:"02d" }}-{{ selected_day.day|stringformat:"02d" }}">
                     <h3>Booking Calendar</h3>
+                    <p>SELECTED DAY {{ selected_day }}</p>
 
                     <!-- Текущий месяц -->
                     <h4>Current Month: {{ current_month }} {{ current_year }}</h4>

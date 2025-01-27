@@ -99,14 +99,14 @@ def book_service(request, trainer_id, service_id, day=None):
     if request.method == "GET":
         if request.user.groups.filter(name="User").exists():
             from trainer.utils import generate_actual_calendar, booking_time_discovery
-
             service = trainer.models.Service.objects.filter(pk=service_id).first()
 
             date_param = request.GET.get("date")
             if date_param:
                 date = datetime.strptime(date_param, "%Y-%m-%d").date()
             else:
-                date = timezone.now().date()
+                now = datetime.now()
+                date = now.date()
 
             current_month = int(request.GET.get("month", timezone.now().month))
             current_year = int(request.GET.get("year", timezone.now().year))
@@ -131,9 +131,9 @@ def book_service(request, trainer_id, service_id, day=None):
             next_next_calendar_rows = generate_actual_calendar(next_next_year, next_next_month, date)
 
             possible_times = booking_time_discovery(trainer_id, service_id, date)
-
             if not day:
-                day = timezone.now().date()
+                now = datetime.now()
+                day = now.date()
 
             return render(request, "service.html", {"service": service,
                                                     "calendar_rows": calendar_rows,
@@ -146,7 +146,7 @@ def book_service(request, trainer_id, service_id, day=None):
                                                     "next_next_month": next_next_month,
                                                     "next_next_year": next_next_year,
                                                     "possible_times": possible_times,
-                                                    "selected_day": day})
+                                                    "selected_day": date})
 
     if request.method == "POST":
         if request.user.groups.filter(name="User").exists():
@@ -163,12 +163,9 @@ def book_service(request, trainer_id, service_id, day=None):
             service = trainer.models.Service.objects.get(id=service_id)
 
             datetime_start = datetime.combine(datetime.strptime(date, "%Y-%m-%d").date(),
-                                               datetime.strptime(time_start, "%H:%M").time())
+                                              datetime.strptime(time_start, "%H:%M").time())
             datetime_end = datetime.combine(datetime.strptime(date, "%Y-%m-%d").date(),
-                                             datetime.strptime(time_end, "%H:%M").time())
-
-            datetime_start = timezone.make_naive(datetime_start, timezone.get_current_timezone())
-            datetime_end = timezone.make_naive(datetime_end, timezone.get_current_timezone())
+                                            datetime.strptime(time_end, "%H:%M").time())
 
             booking = Booking.objects.create(
                 datetime_start=datetime_start,

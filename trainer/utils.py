@@ -14,7 +14,11 @@ def is_booking_conflict(current_start, current_end, trainer_booking, date):
     """
     for booking in trainer_booking:
         if booking.datetime_start.date() == date and booking.status != "canceled":
-            if not (current_end <= booking.datetime_start or current_start >= booking.datetime_end):
+            current_start = current_start.replace(tzinfo=None)
+            current_end = current_end.replace(tzinfo=None)
+            booking_start = booking.datetime_start.replace(tzinfo=None)
+            booking_end = booking.datetime_end.replace(tzinfo=None)
+            if not (current_end <= booking_start or current_start >= booking_end):
                 return True
     return False
 
@@ -30,7 +34,7 @@ def booking_time_discovery(trainer_id, service_id, date):
 
     free_slots = []
     current_time = timezone.now()
-    current_time = timezone.make_naive(current_time, timezone.get_current_timezone())  # Преобразуем в наивное
+    current_time = timezone.make_naive(current_time, timezone.get_current_timezone())
 
     for schedule in trainer_schedule:  # на тот случай, если рабочий день прерывается, например, перерывом на обед
         schedule_start = schedule.datetime_start
@@ -39,6 +43,7 @@ def booking_time_discovery(trainer_id, service_id, date):
         current_start = schedule_start
         while current_start + search_window <= schedule_end:
             current_end = current_start + search_window
+            current_end = timezone.make_naive(current_end)
             if current_end <= current_time:
                 current_start += timedelta(minutes=timestep)
                 continue
@@ -60,7 +65,7 @@ def generate_month_days(year, month):
     """
 
     _, num_days = calendar.monthrange(year, month)
-    first_day_of_month = timezone.make_naive(datetime(year, month, 1)).weekday()  # 0 - Понедельник, 6 - Воскресенье
+    first_day_of_month = datetime(year, month, 1).weekday()  # 0 - Понедельник, 6 - Воскресенье
 
     # Список дней
     days = [None] * first_day_of_month
@@ -82,7 +87,7 @@ def generate_actual_calendar(current_year, current_month, selected_day):
     for week in calendar_rows:
         for day_number in week:
             if day_number:
-                day_date = timezone.make_naive(datetime(current_year, current_month, day_number)).date()
+                day_date = datetime(current_year, current_month, day_number).date()
                 day_data = {
                     "number": day_number,
                     "is_valid": True,
