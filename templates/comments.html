@@ -1,0 +1,65 @@
+{% if user == request.user %}
+    <h3>Ratings and Comments</h3>
+    <p>Number of ratings received: {{ ratings_received.count }}</p>
+
+    <form method="GET" action="">
+        <input type="hidden" name="show_my_comments" value="{% if show_my_comments %}false{% else %}true{% endif %}">
+        {% if not show_my_comments %}
+            <button type="submit" class="btn btn-primary">Show my comments</button>
+        {% else %}
+            <button type="submit" class="btn btn-primary">Show received comments</button>
+        {% endif %}
+    </form>
+
+{% else %}
+    {% if has_connection %}
+        <h3>Leave a Rating and Comment</h3>
+
+        <!-- Форма для оставления оценки -->
+        <form method="POST" action="{% url 'users:add_or_update_rating' user_id=user.id %} ">
+            {% csrf_token %}
+            <div>
+                <label for="rate">Rating (1 to 5):</label><br>
+                <input type="radio" name="rate" value="1" {% if existing_rating and existing_rating.rate == 1 %}checked{% endif %}> 1
+                <input type="radio" name="rate" value="2" {% if existing_rating and existing_rating.rate == 2 %}checked{% endif %}> 2
+                <input type="radio" name="rate" value="3" {% if existing_rating and existing_rating.rate == 3 %}checked{% endif %}> 3
+                <input type="radio" name="rate" value="4" {% if existing_rating and existing_rating.rate == 4 %}checked{% endif %}> 4
+                <input type="radio" name="rate" value="5" {% if existing_rating and existing_rating.rate == 5 %}checked{% endif %}> 5
+            </div>
+            <br>
+            <div>
+                <label for="text">Comment (optional):</label><br>
+                <textarea name="text" rows="4" cols="50">
+                    {% if existing_rating %}
+                        {{ existing_rating.text }}
+                    {% endif %}
+                </textarea>
+            </div>
+            <br>
+            <button type="submit" class="btn btn-primary">
+                {% if existing_rating %}
+                    Change rating
+                {% else %}
+                    Submit rating
+                {% endif %}
+            </button>
+        </form>
+    {% else %}
+        <p>You can only leave a rating and comment if you have a booking connection with this user.</p>
+    {% endif %}
+{% endif %}
+
+<h3>All Comments</h3>
+<ul>
+    {% for rating in ratings_received %}
+        <li>
+            <strong>Rating: {{ rating.rate }} / 5</strong><br>
+            <strong>Comment:</strong> {{ rating.text|default:"No comment" }}<br>
+            <strong>From:</strong> <a href="{% url 'users:user_details' user_id=rating.author.id %}">
+                {{ rating.author.first_name }} {{ rating.author.last_name }}
+            </a><br>
+        </li>
+    {% empty %}
+        <p>No comments yet.</p>
+    {% endfor %}
+</ul>

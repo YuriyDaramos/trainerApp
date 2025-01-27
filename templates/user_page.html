@@ -15,7 +15,6 @@
     {% endif %}
     <br>Register Date: {{ user.date_joined }}
 
-
     {% if trainer_description %}
         <br><br>About trainer: {{ trainer_description.text }}
     {% endif %}
@@ -95,5 +94,8 @@
             <p>No past bookings.</p>
         {% endif %}
     {% endif %}
+
+    <!-- Ссылка на раздел для оценок и комментариев -->
+    {% include 'comments.html' %}
 
 {% endblock %}
