@@ -7,7 +7,7 @@
     <h2>All users page</h2>
 
     {% for user in page_obj %}
-        <p><a href="{% url 'users:user_details' user.id %}">{{ user.username }}</a></p>
+        <p><a href="{% url 'users:user_details' user.id %}">{{ user.first_name }} {{ user.last_name }}</a></p>
     {% endfor %}
 
     <!-- Pagination -->

@@ -1,17 +1,99 @@
 {% extends "base.html" %}
 
-{% block title %}{{ user.username }} page{% endblock %}
+{% block title %}{{ user.first_name }} {{ user.last_name }} page{% endblock %}
 
 {% block content %}
-
-    <h2>{{ user.username }} profile</h2>
-    <br>User ID: {{ user.id }}
+    <h2>{{ user.first_name }} {{ user.last_name }} profile</h2>
+    {% if user == request.user %}
+        <br>User ID: {{ user.id }}
+        <br>Username: {{ user.username }}
+    {% endif %}
     <br>First Name: {{ user.first_name }}
     <br>Last Name: {{ user.last_name }}
-    <br>Email: {{ user.email }}
+    {% if user == request.user %}
+        <br>Email: {{ user.email }}
+    {% endif %}
     <br>Register Date: {{ user.date_joined }}
 
-    <br><br><h2>{{ user.username }} services</h2>
 
+    {% if trainer_description %}
+        <br><br>About trainer: {{ trainer_description.text }}
+    {% endif %}
+
+    {% if trainer_services_exists %}
+        <br><br><a href="{% url 'trainer:trainer_detail' user.id %}">To {{ user.first_name }} {{ user.last_name }} Services</a>
+    {% endif %}
+
+    {% if user == request.user %}
+        <br><br><h2>Booked Services</h2>
+
+        <h3>Upcoming Bookings</h3>
+        {% if future_bookings %}
+            <ul>
+                {% for booking in future_bookings %}
+                    <li>
+                        <strong>Date:</strong> {{ booking.datetime_start|date:"Y-m-d H:i" }}<br>
+                        <strong>Duration:</strong> {{ booking.service.duration }}<br>
+                        {% if trainer_services_exists %}
+                            <strong>Client:</strong>
+                            <a href="{% url 'users:user_details' user_id=booking.user.id %}">
+                                {{ booking.user.first_name }} {{ booking.user.last_name }}
+                            </a>
+                        {% else %}
+                            <strong>Trainer:</strong>
+                            <a href="{% url 'trainer:trainer_detail' trainer_id=booking.service.trainer_id %}">
+                                {{ booking.service.trainer.first_name }} {{ booking.service.trainer.last_name }}
+                            </a>
+                        {% endif %}
+
+                        {% if booking.status == False %}
+                            <br><span style="color: red; font-weight: bold;">Cancelled</span>
+                        {% else %}
+                            <!-- Форма для отмены бронирования -->
+                            <form method="POST" action="">
+                                {% csrf_token %}
+                                <input type="hidden" name="booking_id" value="{{ booking.id }}">
+                                <button type="submit" class="btn btn-danger">Cancel Booking</button>
+                            </form>
+                        {% endif %}
+                    </li>
+                    <br>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No upcoming bookings.</p>
+        {% endif %}
+
+        <hr>
+
+        <h3>Past Bookings</h3>
+        {% if past_bookings %}
+            <ul>
+                {% for booking in past_bookings %}
+                    <li>
+                        <strong>Date:</strong> {{ booking.datetime_start|date:"Y-m-d H:i" }}<br>
+                        <strong>Duration:</strong> {{ booking.service.duration }}<br>
+                        {% if trainer_services_exists %}
+                            <strong>Client:</strong>
+                            <a href="{% url 'users:user_details' user_id=booking.user.id %}">
+                                {{ booking.user.first_name }} {{ booking.user.last_name }}
+                            </a>
+                        {% else %}
+                            <strong>Trainer:</strong>
+                            <a href="{% url 'trainer:trainer_detail' trainer_id=booking.service.trainer_id %}">
+                                {{ booking.service.trainer.first_name }} {{ booking.service.trainer.last_name }}
+                            </a>
+                        {% endif %}
+                        {% if booking.status == False %}
+                            <br><span style="color: red; font-weight: bold;">Cancelled</span>
+                        {% endif %}
+                    </li>
+                    <br>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No past bookings.</p>
+        {% endif %}
+    {% endif %}
 
 {% endblock %}

@@ -10,11 +10,6 @@
         <h2>{{ trainer.first_name }} {{ trainer.last_name }} Services</h2>
     {% endif %}
 
-    <br>-------------------------
-    <br>Trainers working hours: ....
-    <br>-------------------------
-    <br>
-
         {% for service in trainer_services %}
             <br>Category: {{ service.category.name }}
             <br>Price: {{ service.price }} USD
@@ -22,6 +17,14 @@
             <br>Level: {{ service.level }}
                 {% if not is_trainer %}
                     <br><a href="{% url 'trainer:book_service' trainer_id=trainer_id service_id=service.id %}">Book</a>
+                {% endif %}
+
+                {% if is_trainer and trainer_id == request.user.id %}
+                    <form action="{% url 'trainer:trainer_detail' trainer_id=trainer_id %}" method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="service_id" value="{{ service.id }}">
+                        <button type="submit" class="btn btn-danger">Delete Service</button>
+                    </form>
                 {% endif %}
             <br>-------------------------
         {% endfor %}

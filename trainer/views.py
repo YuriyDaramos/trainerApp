@@ -1,12 +1,11 @@
-from datetime import timedelta, datetime, time
-
 from django.contrib.auth.models import User, Group
 from django.core.paginator import Paginator
-from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import render, redirect
 
 import trainer.models
 from booking.models import Booking
+
+from datetime import datetime, timedelta
 
 
 # Create your views here.
@@ -33,19 +32,23 @@ def trainers(request):
 
 
 def trainer_detail(request, trainer_id):
-    if request.method == "GET":
-        is_trainer = request.user.is_authenticated and request.user.groups.filter(name="Trainer").exists()
-        service_categories = trainer.models.Category.objects.all()
-        trainer_services = trainer.models.Service.objects.filter(trainer=trainer_id)
-        trainer_data = User.objects.filter(id=trainer_id).values("username", "last_name", "first_name").first()
-        return render(request, "trainer.html", {"is_trainer": is_trainer,
-                                                "trainer": trainer_data,
-                                                "trainer_id": trainer_id,
-                                                "service_categories": service_categories,
-                                                "trainer_services": trainer_services})
+    is_trainer = request.user.is_authenticated and request.user.groups.filter(name="Trainer").exists()
+    service_categories = trainer.models.Category.objects.all()
+    trainer_services = trainer.models.Service.objects.filter(trainer=trainer_id)
+    trainer_data = User.objects.filter(id=trainer_id).first()
 
+    if request.method == "POST":
+        if "service_id" in request.POST:
+            service_id = request.POST.get('service_id')
+            service = trainer.models.Service.objects.get(id=service_id, trainer_id=request.user.id)
+            if service:
+                service.delete()
 
-from datetime import datetime, timedelta
+    return render(request, "trainer.html", {"is_trainer": is_trainer,
+                                            "trainer": trainer_data,
+                                            "trainer_id": trainer_id,
+                                            "service_categories": service_categories,
+                                            "trainer_services": trainer_services})
 
 
 def service_page(request, trainer_id):
@@ -95,7 +98,6 @@ def book_service(request, trainer_id, service_id, day=None):
     if request.method == "GET":
         if request.user.groups.filter(name="User").exists():
             from trainer.utils import generate_actual_calendar, booking_time_discovery
-            import calendar
 
             service = trainer.models.Service.objects.filter(pk=service_id).first()
 
@@ -108,6 +110,7 @@ def book_service(request, trainer_id, service_id, day=None):
             current_month = int(request.GET.get("month", datetime.now().month))
             current_year = int(request.GET.get("year", datetime.now().year))
 
+            # Ограничения на даты
             min_date = datetime.today().date()
             max_date = min_date + timedelta(days=90)
             if (current_year, current_month) > (max_date.year, max_date.month):
@@ -115,19 +118,35 @@ def book_service(request, trainer_id, service_id, day=None):
             if (current_year, current_month) < (min_date.year, min_date.month):
                 current_year, current_month = min_date.year, min_date.month
 
+            # Расчёт следующих месяцев и годов
+            next_month = current_month + 1 if current_month < 12 else 1
+            next_year = current_year if current_month < 12 else current_year + 1
+
+            next_next_month = next_month + 1 if next_month < 12 else 1
+            next_next_year = next_year if next_month < 12 else next_year + 1
+
+            # Генерация календарей
             calendar_rows = generate_actual_calendar(current_year, current_month, date)
+            next_calendar_rows = generate_actual_calendar(next_year, next_month, date)
+            next_next_calendar_rows = generate_actual_calendar(next_next_year, next_next_month, date)
 
             possible_times = booking_time_discovery(trainer_id, service_id, date)
 
-            return render(request, "service.html", {
-                "service": service,
-                "selected_day": date,
-                "calendar_rows": calendar_rows,
-                "current_month_name": calendar.month_name[current_month],
-                "current_year": current_year,
-                "current_month": current_month,
-                "possible_times": possible_times,
-            })
+            if not day:
+                day = datetime.today().date()
+
+            return render(request, "service.html", {"service": service,
+                                                    "calendar_rows": calendar_rows,
+                                                    "next_calendar_rows": next_calendar_rows,
+                                                    "next_next_calendar_rows": next_next_calendar_rows,
+                                                    "current_month": current_month,
+                                                    "current_year": current_year,
+                                                    "next_month": next_month,
+                                                    "next_year": next_year,
+                                                    "next_next_month": next_next_month,
+                                                    "next_next_year": next_next_year,
+                                                    "possible_times": possible_times,
+                                                    "selected_day": day})
 
     if request.method == "POST":
         if request.user.groups.filter(name="User").exists():

@@ -1,8 +1,15 @@
+from collections import defaultdict
+
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User, Group
 from django.core.paginator import Paginator
-from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.utils import timezone
+from django.utils.timezone import now
+
+import trainer
+from trainer.models import TrainerDescription
+from booking.models import Booking
 
 
 def users(request):
@@ -17,8 +24,37 @@ def users(request):
 
 
 def user_details(request, user_id):
-    user_data = User.objects.get(id=user_id)
-    return render(request, "user_page.html", {"user": user_data})
+    user = User.objects.get(pk=user_id)
+    if user.groups.filter(name="Trainer").exists():
+        bookings = Booking.objects.filter(trainer_id=user_id).select_related("service", "service__category",
+                                                                             "service__trainer")
+    else:
+        bookings = Booking.objects.filter(user_id=user_id).select_related("service", "service__category",
+                                                                          "service__trainer")
+
+    now = timezone.now()
+    future_bookings = bookings.filter(datetime_start__gte=now).order_by("datetime_start")
+    past_bookings = bookings.filter(datetime_end__lt=now).order_by("-datetime_end")
+
+    trainer_description = None
+    trainer_services_exists = False
+    if user.groups.filter(name="Trainer").exists():
+        trainer_description = TrainerDescription.objects.filter(trainer_id=user.id).first()
+        trainer_services_exists = trainer.models.Service.objects.filter(trainer_id=user.id).exists()
+
+    if request.method == "POST":
+        booking_id = request.POST.get("booking_id")
+        if booking_id:
+            booking = Booking.objects.get(id=booking_id)
+            booking.status = False
+            booking.save()
+        return redirect(request.path)
+
+    return render(request, "user_page.html", {"user": user,
+                                              "future_bookings": future_bookings,
+                                              "past_bookings": past_bookings,
+                                              "trainer_description": trainer_description,
+                                              "trainer_services_exists": trainer_services_exists})
 
 
 def login_page(request):
@@ -75,4 +111,5 @@ def register_page(request):
 
         login(request, user)
         user_role = user.groups.first().name
-        return render(request, "index.html", {"success": f"Registrations success! Welcome, {username}. Your role: {user_role}."})
+        return render(request, "index.html",
+                      {"success": f"Registrations success! Welcome, {username}. Your role: {user_role}."})

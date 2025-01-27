@@ -1,0 +1,34 @@
+<table border="1" cellspacing="0" cellpadding="5">
+    <thead>
+        <tr>
+            <th>Mon</th>
+            <th>Tue</th>
+            <th>Wed</th>
+            <th>Thu</th>
+            <th>Fri</th>
+            <th style="color: red;">Sat</th>
+            <th style="color: red;">Sun</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for week in calendar_rows %}
+        <tr>
+            {% for day in week %}
+            <td>
+                {% if day.is_valid %}
+                    {% if day.is_holiday %}
+                        <span style="color: red;">{{ day.number }}</span>
+                    {% elif day.is_unavailable %}
+                        <span style="color: gray;">{{ day.number }}</span>
+                    {% else %}
+                        <a href="?date={{ year }}-{{ month|stringformat:"02d" }}-{{ day.number|stringformat:"02d" }}">
+                            {{ day.number }}
+                        </a>
+                    {% endif %}
+                {% endif %}
+            </td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

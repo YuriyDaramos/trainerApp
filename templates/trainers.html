@@ -21,7 +21,7 @@
     {% if page_obj %}
         {% for trainer in page_obj %}
             <p>
-                <a href="{% url 'trainer:trainer_detail' trainer.id %}">{{ trainer.username }}</a>
+                <a href="{% url 'trainer:trainer_detail' trainer.id %}">{{ trainer.first_name }} {{ trainer.last_name }}</a>
             </p>
         {% endfor %}
     {% else %}
