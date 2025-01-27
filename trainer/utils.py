@@ -30,7 +30,7 @@ def booking_time_discovery(trainer_id, service_id, date):
     timestep = 15  # минуты
 
     free_slots = []
-    current_time = timezone.now()
+    current_time = datetime.now()
     for schedule in trainer_schedule:  # на тот случай, если рабочий день прерывается, например, перерывом на обед
         schedule_start = schedule.datetime_start
         schedule_end = schedule.datetime_end
