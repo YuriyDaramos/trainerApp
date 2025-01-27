@@ -110,7 +110,6 @@ def book_service(request, trainer_id, service_id, day=None):
             current_month = int(request.GET.get("month", datetime.now().month))
             current_year = int(request.GET.get("year", datetime.now().year))
 
-            # Ограничения на даты
             min_date = datetime.today().date()
             max_date = min_date + timedelta(days=90)
             if (current_year, current_month) > (max_date.year, max_date.month):

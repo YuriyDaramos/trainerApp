@@ -1,5 +1,7 @@
 from datetime import timedelta, datetime
 
+from django.utils import timezone
+
 import trainer.models
 from booking.models import Booking
 
@@ -28,6 +30,7 @@ def booking_time_discovery(trainer_id, service_id, date):
     timestep = 15  # минуты
 
     free_slots = []
+    current_time = timezone.now()
     for schedule in trainer_schedule:  # на тот случай, если рабочий день прерывается, например, перерывом на обед
         schedule_start = schedule.datetime_start
         schedule_end = schedule.datetime_end
@@ -35,6 +38,10 @@ def booking_time_discovery(trainer_id, service_id, date):
         current_start = schedule_start
         while current_start + search_window <= schedule_end:
             current_end = current_start + search_window
+
+            if current_end <= current_time:
+                current_start += timedelta(minutes=timestep)
+                continue
 
             if not is_booking_conflict(current_start, current_end, trainer_booking, date):
                 free_slots.append((current_start, current_end))
