@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User, Group
 from django.core.paginator import Paginator
 from django.shortcuts import render, redirect
+from django.utils import timezone
 
 import trainer.models
 from booking.models import Booking
@@ -105,12 +106,12 @@ def book_service(request, trainer_id, service_id, day=None):
             if date_param:
                 date = datetime.strptime(date_param, "%Y-%m-%d").date()
             else:
-                date = datetime.today().date()
+                date = timezone.now().date()
 
-            current_month = int(request.GET.get("month", datetime.now().month))
-            current_year = int(request.GET.get("year", datetime.now().year))
+            current_month = int(request.GET.get("month", timezone.now().month))
+            current_year = int(request.GET.get("year", timezone.now().year))
 
-            min_date = datetime.today().date()
+            min_date = timezone.now().date()
             max_date = min_date + timedelta(days=90)
             if (current_year, current_month) > (max_date.year, max_date.month):
                 current_year, current_month = max_date.year, max_date.month
@@ -132,7 +133,7 @@ def book_service(request, trainer_id, service_id, day=None):
             possible_times = booking_time_discovery(trainer_id, service_id, date)
 
             if not day:
-                day = datetime.today().date()
+                day = timezone.now().date()
 
             return render(request, "service.html", {"service": service,
                                                     "calendar_rows": calendar_rows,
@@ -162,9 +163,12 @@ def book_service(request, trainer_id, service_id, day=None):
             service = trainer.models.Service.objects.get(id=service_id)
 
             datetime_start = datetime.combine(datetime.strptime(date, "%Y-%m-%d").date(),
-                                              datetime.strptime(time_start, "%H:%M").time())
+                                               datetime.strptime(time_start, "%H:%M").time())
             datetime_end = datetime.combine(datetime.strptime(date, "%Y-%m-%d").date(),
-                                            datetime.strptime(time_end, "%H:%M").time())
+                                             datetime.strptime(time_end, "%H:%M").time())
+
+            datetime_start = timezone.make_naive(datetime_start, timezone.get_current_timezone())
+            datetime_end = timezone.make_naive(datetime_end, timezone.get_current_timezone())
 
             booking = Booking.objects.create(
                 datetime_start=datetime_start,

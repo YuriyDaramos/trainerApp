@@ -6,7 +6,6 @@ import trainer.models
 from booking.models import Booking
 
 import calendar
-from datetime import datetime
 
 
 def is_booking_conflict(current_start, current_end, trainer_booking, date):
@@ -30,7 +29,9 @@ def booking_time_discovery(trainer_id, service_id, date):
     timestep = 15  # минуты
 
     free_slots = []
-    current_time = datetime.now()
+    current_time = timezone.now()
+    current_time = timezone.make_naive(current_time, timezone.get_current_timezone())  # Преобразуем в наивное
+
     for schedule in trainer_schedule:  # на тот случай, если рабочий день прерывается, например, перерывом на обед
         schedule_start = schedule.datetime_start
         schedule_end = schedule.datetime_end
@@ -38,11 +39,9 @@ def booking_time_discovery(trainer_id, service_id, date):
         current_start = schedule_start
         while current_start + search_window <= schedule_end:
             current_end = current_start + search_window
-
             if current_end <= current_time:
                 current_start += timedelta(minutes=timestep)
                 continue
-
             if not is_booking_conflict(current_start, current_end, trainer_booking, date):
                 free_slots.append((current_start, current_end))
 
@@ -61,7 +60,7 @@ def generate_month_days(year, month):
     """
 
     _, num_days = calendar.monthrange(year, month)
-    first_day_of_month = datetime(year, month, 1).weekday()  # 0 - Понедельник, 6 - Воскресенье
+    first_day_of_month = timezone.make_naive(datetime(year, month, 1)).weekday()  # 0 - Понедельник, 6 - Воскресенье
 
     # Список дней
     days = [None] * first_day_of_month
@@ -78,12 +77,12 @@ def generate_month_days(year, month):
 
 def generate_actual_calendar(current_year, current_month, selected_day):
     calendar_rows = generate_month_days(current_year, current_month)
-    today = datetime.today().date()
+    today = timezone.now().date()
 
     for week in calendar_rows:
         for day_number in week:
             if day_number:
-                day_date = datetime(current_year, current_month, day_number).date()
+                day_date = timezone.make_naive(datetime(current_year, current_month, day_number)).date()
                 day_data = {
                     "number": day_number,
                     "is_valid": True,

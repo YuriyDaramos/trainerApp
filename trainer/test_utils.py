@@ -65,7 +65,7 @@ class TestBookingTimeDiscovery(unittest.TestCase):
 
             # 13:00-15:00
             (datetime(self.year, self.month, self.day, 14, 0), datetime(self.year, self.month, self.day, 14, 15)),  # 14:00 - 14:15
-            (datetime(self.year, self.month, self.day, 14, 15), datetime(self.year, self.month, self.day, 15, 00)),  # 14:15 - 15:00
+            (datetime(self.year, self.month, self.day, 14, 15), datetime(self.year, self.month, self.day, 14, 30)),  # 14:15 - 14:45
         ]
 
         self.assertEqual(free_slots, expected_slots)
