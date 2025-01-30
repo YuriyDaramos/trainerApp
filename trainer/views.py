@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User, Group
 from django.core.paginator import Paginator
+from django.http import HttpResponseForbidden
 from django.shortcuts import render, redirect
 from django.utils import timezone
 
@@ -13,6 +14,7 @@ from datetime import datetime, timedelta
 
 
 def trainers(request):
+    """ Отображение всех тренеров по категориям. """
     selected_category = request.GET.get("category", "all")
 
     trainer_group = Group.objects.get(name="Trainer")
@@ -33,14 +35,16 @@ def trainers(request):
 
 
 def trainer_detail(request, trainer_id):
+    """ Страница тренера. """
     is_trainer = request.user.is_authenticated and request.user.groups.filter(name="Trainer").exists()
     service_categories = trainer.models.Category.objects.all()
     trainer_services = trainer.models.Service.objects.filter(trainer=trainer_id)
     trainer_data = User.objects.filter(id=trainer_id).first()
 
     if request.method == "POST":
+        """ Удаление своего сервиса тренером. """
         if "service_id" in request.POST:
-            service_id = request.POST.get('service_id')
+            service_id = request.POST.get("service_id")
             service = trainer.models.Service.objects.get(id=service_id, trainer_id=request.user.id)
             if service:
                 service.delete()
@@ -53,11 +57,7 @@ def trainer_detail(request, trainer_id):
 
 
 def service_page(request, trainer_id):
-    if request.method == "GET":
-        services = trainer.models.Service.objects.filter(trainer_id=trainer_id)
-        service_categories = trainer.models.Category.objects.all()
-        return render(request, "service.html", {"services": services, "service_categories": service_categories})
-
+    """ Создание сервисов тренером и установка рабочего времени """
     if request.method == "POST":
         if request.user.groups.filter(name="Trainer").exists():
             form_data = request.POST
@@ -91,8 +91,7 @@ def service_page(request, trainer_id):
                     datetime_end=end_datetime_obj,
                 )
                 return redirect(request.META.get("HTTP_REFERER", "/"))
-
-        return redirect(request.META.get("HTTP_REFERER", "/"))
+        return HttpResponseForbidden("Forbidden")
 
 
 def book_service(request, trainer_id, service_id, day=None):
@@ -177,3 +176,4 @@ def book_service(request, trainer_id, service_id, day=None):
             )
 
             return redirect("trainer:book_service", trainer_id=trainer_data.id, service_id=service.id)
+    return HttpResponseForbidden("Forbidden")
