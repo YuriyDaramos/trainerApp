@@ -9,24 +9,16 @@
     <form action="{% url "user_login" %}" method="POST">
         {% csrf_token %}
 
-        {% if error %}
-            <p class="message error">{{ error }}</p>
+        {% if form.non_field_errors %}
+            <div class="error">
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
         {% endif %}
 
-        <label for="username">Username:</label>
-        <input type="text" name="username" id="username" required>
-        <br>
-
-        <label for="password">Password:</label>
-        <input type="password" name="password" id="password" required>
-        <br>
-
+        {{ form.as_p }}
         <button type="submit">Login</button>
-        <br>
-
-        <br><p>Testing features:</p>
-        <label for="delete_user" class="delete-user-label">Delete user (password must be valid):</label>
-        <input type="checkbox" name="delete_user" id="delete_user" placeholder="username">
     </form>
 
 {% endblock %}

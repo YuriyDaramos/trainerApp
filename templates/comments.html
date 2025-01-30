@@ -18,25 +18,8 @@
         <!-- Форма для оставления оценки -->
         <form method="POST" action="{% url 'users:add_or_update_rating' user_id=user.id %} ">
             {% csrf_token %}
-            <div>
-                <label for="rate">Rating (1 to 5):</label><br>
-                <input type="radio" name="rate" value="1" {% if existing_rating and existing_rating.rate == 1 %}checked{% endif %}> 1
-                <input type="radio" name="rate" value="2" {% if existing_rating and existing_rating.rate == 2 %}checked{% endif %}> 2
-                <input type="radio" name="rate" value="3" {% if existing_rating and existing_rating.rate == 3 %}checked{% endif %}> 3
-                <input type="radio" name="rate" value="4" {% if existing_rating and existing_rating.rate == 4 %}checked{% endif %}> 4
-                <input type="radio" name="rate" value="5" {% if existing_rating and existing_rating.rate == 5 %}checked{% endif %}> 5
-            </div>
-            <br>
-            <div>
-                <label for="text">Comment (optional):</label><br>
-                <textarea name="text" rows="4" cols="50">
-                    {% if existing_rating %}
-                        {{ existing_rating.text }}
-                    {% endif %}
-                </textarea>
-            </div>
-            <br>
-            <button type="submit" class="btn btn-primary">
+            {{ form.as_p }}
+            <button type="submit">
                 {% if existing_rating %}
                     Change rating
                 {% else %}

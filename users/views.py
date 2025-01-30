@@ -1,6 +1,7 @@
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User, Group
 from django.core.paginator import Paginator
+from django.http import HttpResponseForbidden
 from django.shortcuts import render, redirect
 from django.utils import timezone
 
@@ -8,6 +9,8 @@ import trainer
 from trainer.models import TrainerDescription
 from booking.models import Booking
 from users.models import Rating
+
+from .forms import UserRegistrationForm, UserLoginForm, RatingAndCommentForm
 
 
 def users(request):
@@ -22,35 +25,54 @@ def users(request):
 
 
 def user_details(request, user_id):
-    user = User.objects.get(pk=user_id)
-    if user.groups.filter(name="Trainer").exists():
-        bookings = Booking.objects.filter(trainer_id=user_id).select_related("service", "service__category",
-                                                                             "service__trainer")
-    else:
-        bookings = Booking.objects.filter(user_id=user_id).select_related("service", "service__category",
-                                                                          "service__trainer")
+    if request.method == "GET":
+        user = User.objects.get(pk=user_id)
+        trainer_description = None
+        trainer_services_exists = False
+        bookings = None
 
-    date_now = timezone.now()
-    future_bookings = bookings.filter(datetime_start__gte=date_now).order_by("datetime_start")
-    past_bookings = bookings.filter(datetime_end__lt=date_now).order_by("-datetime_end")
+        if user.groups.filter(name="Trainer").exists():
+            bookings = Booking.objects.filter(trainer_id=user_id).select_related("service", "service__category",
+                                                                                 "service__trainer")
+            trainer_description = TrainerDescription.objects.filter(trainer_id=user.id).first()
+            trainer_services_exists = trainer.models.Service.objects.filter(trainer_id=user.id).exists()
 
-    trainer_description = None
-    trainer_services_exists = False
-    if user.groups.filter(name="Trainer").exists():
-        trainer_description = TrainerDescription.objects.filter(trainer_id=user.id).first()
-        trainer_services_exists = trainer.models.Service.objects.filter(trainer_id=user.id).exists()
+        if user.groups.filter(name="User").exists():
+            bookings = Booking.objects.filter(user_id=user_id).select_related("service", "service__category",
+                                                                              "service__trainer")
 
-    has_connection = Booking.objects.filter(user_id=request.user.id, trainer_id=user.id).exists() or \
-                     Booking.objects.filter(user_id=user.id, trainer_id=request.user.id).exists()
+        date_now = timezone.now()
+        future_bookings = bookings.filter(datetime_start__gte=date_now).order_by("datetime_start")
+        past_bookings = bookings.filter(datetime_end__lt=date_now).order_by("-datetime_end")
 
-    show_my_comments = request.GET.get("show_my_comments", "false") == "true"
+        has_connection = Booking.objects.filter(user_id=request.user.id, trainer_id=user.id).exists() or \
+                         Booking.objects.filter(user_id=user.id, trainer_id=request.user.id).exists()
 
-    if show_my_comments:
-        ratings_received = Rating.objects.filter(author=user)
-    else:
-        ratings_received = Rating.objects.filter(recipient=user)
+        show_my_comments = request.GET.get("show_my_comments", "false") == "true"
 
-    existing_rating = Rating.objects.filter(author=request.user, recipient=user).first()
+        if show_my_comments:
+            ratings_received = Rating.objects.filter(author=user)
+        else:
+            ratings_received = Rating.objects.filter(recipient=user)
+
+        existing_rating = Rating.objects.filter(author=request.user, recipient=user).first()
+
+        initial_data = {}
+        if existing_rating:
+            initial_data = {"rate": existing_rating.rate,
+                            "text": existing_rating.text}
+        form = RatingAndCommentForm(initial=initial_data)
+
+        return render(request, "user_page.html", {"form": form,
+                                                  "user": user,
+                                                  "future_bookings": future_bookings,
+                                                  "past_bookings": past_bookings,
+                                                  "trainer_description": trainer_description,
+                                                  "trainer_services_exists": trainer_services_exists,
+                                                  "ratings_received": ratings_received,
+                                                  "has_connection": has_connection,
+                                                  "existing_rating": existing_rating,
+                                                  "show_my_comments": show_my_comments})
 
     if request.method == "POST":
         booking_id = request.POST.get("booking_id")
@@ -58,41 +80,27 @@ def user_details(request, user_id):
             booking = Booking.objects.get(id=booking_id)
             booking.status = False
             booking.save()
-        return redirect(request.path)
 
-    return render(request, "user_page.html", {"user": user,
-                                              "future_bookings": future_bookings,
-                                              "past_bookings": past_bookings,
-                                              "trainer_description": trainer_description,
-                                              "trainer_services_exists": trainer_services_exists,
-                                              "ratings_received": ratings_received,
-                                              "has_connection": has_connection,
-                                              "existing_rating": existing_rating,
-                                              "show_my_comments": show_my_comments})
+        return redirect(request.path)
 
 
 def login_page(request):
     if request.method == "GET":
-        return render(request, "login.html")
+        form = UserLoginForm()
+        return render(request, "login.html", {"form": form})
 
     if request.method == "POST":
-        username = request.POST.get("username")
-        password = request.POST.get("password")
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-
-            # --- for testing only ---
-            delete_user = request.POST.get("delete_user")
-            if delete_user:
-                user = User.objects.get(username=username)
-                user.delete()
-                return render(request, "index.html", {"warning": f"User '{username}' deleted"})
-            # --- for testing only ---
-
-            login(request, user)
-            return render(request, "index.html", {"success": f"Log in success! Welcome, {username}."})
-        else:
-            return render(request, "login.html", {"error": "Invalid username or password"})
+        form = UserLoginForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data["username"]
+            password = form.cleaned_data["password"]
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                login(request, user)
+                return render(request, "index.html", {"success": f"Log in success! Welcome, {username}."})
+            else:
+                form.add_error(None, "Invalid username or password.")
+                return render(request, "login.html", {"form": form})
 
 
 def logout_page(request):
@@ -101,40 +109,44 @@ def logout_page(request):
         logout(request)
         return render(request, "index.html", {"success": f"Log out success! Goodbye, {username}."})
     else:
-        return render(request, "index.html", {"warning": f"Log in first."})
+        return HttpResponseForbidden("Forbidden")
 
 
 def register_page(request):
     if request.method == "GET":
-        return render(request, "register.html")
+        form = UserRegistrationForm()
+        return render(request, "register.html", {"form": form})
 
     if request.method == "POST":
-        username = request.POST.get("username")
-        first_name = request.POST.get("first_name")
-        last_name = request.POST.get("last_name")
-        email = request.POST.get("email")
-        password = request.POST.get("password")
-        user = User.objects.create_user(username, email, password, first_name=first_name, last_name=last_name)
+        form = UserRegistrationForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.set_password(form.cleaned_data["password"])
+            user.save()
 
-        is_trainer = request.POST.get("is_trainer") == 'on'
-        group_name = "Trainer" if is_trainer else "User"
-        group = Group.objects.get(name=group_name)
-        user.groups.add(group)
+            is_trainer = form.cleaned_data.get("is_trainer")
+            group_name = "Trainer" if is_trainer else "User"
+            group = Group.objects.get(name=group_name)
+            user.groups.add(group)
 
-        user.save()
-
-        login(request, user)
-        user_role = user.groups.first().name
-        return render(request, "index.html",
-                      {"success": f"Registrations success! Welcome, {username}. Your role: {user_role}."})
+            login(request, user)
+            username = user.username
+            user_role = user.groups.first().name
+            return render(request, "index.html",
+                          {"success": f"Registrations success! Welcome, {username}. Your role: {user_role}."})
+        else:
+            return render(request, "register.html", {"form": form})
 
 
 def add_or_update_rating(request, user_id):
     if request.method == "POST":
-        user = User.objects.get(pk=user_id)
+        rate, text = None, ""
+        form = RatingAndCommentForm(request.POST)
+        if form.is_valid():
+            rate = form.cleaned_data["rate"]
+            text = form.cleaned_data["text"]
 
-        rate = request.POST.get("rate")
-        text = request.POST.get("text")
+        user = User.objects.get(pk=user_id)
 
         existing_rating = Rating.objects.filter(author=request.user, recipient=user).first()
 
@@ -149,3 +161,5 @@ def add_or_update_rating(request, user_id):
                                   text=text)
 
         return redirect("users:user_details", user_id=user.id)
+    else:
+        return HttpResponseForbidden
