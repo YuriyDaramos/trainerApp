@@ -9,8 +9,8 @@ from booking.models import Booking
 
 from datetime import datetime, timedelta
 
-
 # Create your views here.
+from trainer.forms import AddTrainerService, SetWorkingHours, EditTrainerService, SetDescription
 
 
 def trainers(request):
@@ -35,63 +35,26 @@ def trainers(request):
 
 
 def trainer_detail(request, trainer_id):
-    """ Страница тренера. """
+    """ Страница тренера: настройки сервисов, рабочего времени. """
     is_trainer = request.user.is_authenticated and request.user.groups.filter(name="Trainer").exists()
     service_categories = trainer.models.Category.objects.all()
     trainer_services = trainer.models.Service.objects.filter(trainer=trainer_id)
     trainer_data = User.objects.filter(id=trainer_id).first()
+    form_add_service = AddTrainerService()
+    form_set_working_hours = SetWorkingHours()
+    form_set_description = SetDescription()
 
     if request.method == "POST":
-        """ Удаление своего сервиса тренером. """
-        if "service_id" in request.POST:
-            service_id = request.POST.get("service_id")
-            service = trainer.models.Service.objects.get(id=service_id, trainer_id=request.user.id)
-            if service:
-                service.delete()
+        pass
 
-    return render(request, "trainer.html", {"is_trainer": is_trainer,
+    return render(request, "trainer.html", {"form_add_service": form_add_service,
+                                            "form_set_working_hours": form_set_working_hours,
+                                            "form_set_description": form_set_description,
+                                            "is_trainer": is_trainer,
                                             "trainer": trainer_data,
                                             "trainer_id": trainer_id,
                                             "service_categories": service_categories,
                                             "trainer_services": trainer_services})
-
-
-def service_page(request, trainer_id):
-    """ Создание сервисов тренером и установка рабочего времени """
-    if request.method == "POST":
-        if request.user.groups.filter(name="Trainer").exists():
-            form_data = request.POST
-
-            if "duration" in form_data:
-                service_category = trainer.models.Category.objects.get(pk=form_data["category"])
-
-                duration_minutes = int(form_data["duration"])
-                duration = timedelta(minutes=duration_minutes)
-
-                service = trainer.models.Service(
-                    level=form_data["level"],
-                    duration=duration,
-                    price=form_data["price"],
-                    category=service_category,
-                    trainer=request.user,
-                )
-                service.save()
-                return redirect(request.META.get("HTTP_REFERER", "/"))
-
-            elif "start_datetime" in form_data and "end_datetime" in form_data:
-                start_datetime = form_data.get("start_datetime")
-                end_datetime = form_data.get("end_datetime")
-
-                start_datetime_obj = datetime.fromisoformat(start_datetime)
-                end_datetime_obj = datetime.fromisoformat(end_datetime)
-
-                trainer.models.TrainerSchedule.objects.create(
-                    trainer_id=trainer_id,
-                    datetime_start=start_datetime_obj,
-                    datetime_end=end_datetime_obj,
-                )
-                return redirect(request.META.get("HTTP_REFERER", "/"))
-        return HttpResponseForbidden("Forbidden")
 
 
 def book_service(request, trainer_id, service_id, day=None):
@@ -166,14 +129,85 @@ def book_service(request, trainer_id, service_id, day=None):
             datetime_end = datetime.combine(datetime.strptime(date, "%Y-%m-%d").date(),
                                             datetime.strptime(time_end, "%H:%M").time())
 
-            booking = Booking.objects.create(
-                datetime_start=datetime_start,
-                datetime_end=datetime_end,
-                status=True,
-                service_id=service.id,
-                trainer_id=trainer_data.id,
-                user_id=user.id
-            )
+            booking = Booking.objects.create(datetime_start=datetime_start,
+                                             datetime_end=datetime_end,
+                                             status=True,
+                                             service_id=service.id,
+                                             trainer_id=trainer_data.id,
+                                             user_id=user.id)
 
             return redirect("trainer:book_service", trainer_id=trainer_data.id, service_id=service.id)
+    return HttpResponseForbidden("Forbidden")
+
+
+def add_trainer_service(request, trainer_id):
+    if request.method == "POST":
+        if request.user.groups.filter(name="Trainer").exists():
+            form = AddTrainerService(request.POST)
+            if form.is_valid():
+                duration = 60 * form.cleaned_data["duration"]
+                service = trainer.models.Service(level=form.cleaned_data["level"],
+                                                 duration=duration,
+                                                 price=form.cleaned_data["price"],
+                                                 category=form.cleaned_data["category"],
+                                                 trainer=request.user)
+                service.save()
+
+                return redirect("trainer:trainer_detail", trainer_id=trainer_id)
+        else:
+            return HttpResponseForbidden
+
+
+def edit_trainer_service(request, trainer_id, service_id):
+    if request.method == "GET":
+        if request.user.groups.filter(name="Trainer").exists():
+            service = trainer.models.Service.objects.get(id=service_id, trainer=request.user)
+            form = EditTrainerService(instance=service)
+
+            return render(request, "edit_services.html", {"form": form,
+                                                          "trainer_id": trainer_id,
+                                                          "service_id": service_id})
+    if request.method == "POST":
+        if request.user.groups.filter(name="Trainer").exists():
+            service = trainer.models.Service.objects.get(id=service_id,
+                                                         trainer=request.user)
+            form = EditTrainerService(request.POST, instance=service)
+            if form.is_valid():
+                form.save()
+                if form.cleaned_data.get("delete"):
+                    service.delete()
+                return redirect("trainer:trainer_detail", trainer_id=trainer_id)
+
+    return HttpResponseForbidden("Forbidden")
+
+
+def set_working_hours(request, trainer_id):
+    if request.method == "POST":
+        if request.user.groups.filter(name="Trainer").exists():
+            form = SetWorkingHours(request.POST)
+            if form.is_valid():
+                schedule = trainer.models.TrainerSchedule(datetime_start=form.cleaned_data["datetime_start"],
+                                                          datetime_end=form.cleaned_data["datetime_end"],
+                                                          trainer=request.user)
+                schedule.save()
+                return redirect("trainer:trainer_detail", trainer_id=trainer_id)
+        else:
+            return HttpResponseForbidden
+
+
+def set_trainer_description(request, trainer_id):
+    if request.method == "POST":
+        if request.user.groups.filter(name="Trainer").exists():
+            form = SetDescription(request.POST)
+            if form.is_valid():
+                description, created = trainer.models.TrainerDescription.objects.get_or_create(
+                    trainer=request.user,
+                    defaults={"text": form.cleaned_data["text"]})
+
+                if not created:
+                    description.text = form.cleaned_data["text"]
+                    description.save()
+
+                return redirect("trainer:trainer_detail", trainer_id=trainer_id)
+
     return HttpResponseForbidden("Forbidden")

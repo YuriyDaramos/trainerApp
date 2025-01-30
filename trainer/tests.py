@@ -58,53 +58,67 @@ class TrainerTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
-    def test_delete_own_service_as_trainer(self):
+    def test_edit_service(self):
+        url = reverse("trainer:edit_trainer_service", kwargs={"trainer_id": self.trainer_user.id,
+                                                              "service_id": self.service.id})
+        post_data = {"service_id": str(self.service.id),
+                     "category": self.category.id,
+                     "duration": "02:00:00",
+                     "price": 150,
+                     "level": 2,
+                     "delete": False}
+
         self.client.login(username="trainer", password=self.password)
 
-        url = reverse("trainer:trainer_detail", kwargs={"trainer_id": self.trainer_user.id})
-        post_data = {"service_id": str(self.service.id)}
+        response = self.client.post(url, data=post_data)
+        self.assertEqual(response.status_code, 302)
+        self.service.refresh_from_db()
+        self.assertEqual(self.service.duration, timedelta(hours=2))
+        self.assertEqual(self.service.price, 150)
+        self.assertEqual(self.service.level, 2)
+
+        # if "delete"
+        post_data["delete"] = True
 
         response = self.client.post(url, data=post_data)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
         self.assertFalse(trainer.models.Service.objects.filter(id=self.service.id).exists())
 
     def test_add_service(self):
-        url = reverse("trainer:service_page", kwargs={"trainer_id": self.trainer_user.id})
+        url = reverse("trainer:add_trainer_service", kwargs={"trainer_id": self.trainer_user.id})
         post_data = {"level": "1",
                      "duration": "60",
                      "price": "99",
-                     "category": str(self.category.id),
-                     "trainer": self.trainer_user.id}
+                     "category": str(self.category.id)}
 
-        # if User
-        self.client.login(username="user", password=self.password)
-
-        response = self.client.post(url, data=post_data, follow=True)
-        self.assertEqual(response.status_code, 403)
-
-        # if Trainer
         self.client.login(username="trainer", password=self.password)
 
         response = self.client.post(url, data=post_data, follow=True)
         self.assertEqual(response.status_code, 200)
+
+        self.assertTrue(
+            trainer.models.Service.objects.filter(trainer=self.trainer_user, category=self.category).exists())
+
+        service = trainer.models.Service.objects.filter(trainer=self.trainer_user, category=self.category).first()
+        self.assertEqual(service.level, 1)
+        self.assertEqual(service.duration, timedelta(minutes=60))
+        self.assertEqual(service.price, 99)
 
     def test_add_working_hours(self):
-        url = reverse("trainer:service_page", kwargs={"trainer_id": self.trainer_user.id})
-        post_data = {"start_datetime": datetime.now().isoformat(),
-                     "end_datetime": (datetime.now() + timedelta(hours=1)).isoformat()}
+        url = reverse("trainer:set_working_hours", kwargs={"trainer_id": self.trainer_user.id})
 
-        # if User
-        self.client.login(username="user", password=self.password)
+        post_data = {"datetime_start": "2025-01-01T10:00",
+                     "datetime_end": "2025-01-01T20:00"}
 
-        response = self.client.post(url, data=post_data, follow=True)
-        self.assertEqual(response.status_code, 403)
-
-        # if Trainer
         self.client.login(username="trainer", password=self.password)
-
         response = self.client.post(url, data=post_data, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(trainer.models.TrainerSchedule.objects.filter(trainer_id=self.trainer_user.id).exists())
+
+        self.assertTrue(trainer.models.TrainerSchedule.objects.filter(trainer=self.trainer_user).exists())
+
+        schedule = trainer.models.TrainerSchedule.objects.get(trainer=self.trainer_user)
+        self.assertEqual(schedule.datetime_start.strftime("%Y-%m-%dT%H:%M"), post_data["datetime_start"])
+        self.assertEqual(schedule.datetime_end.strftime("%Y-%m-%dT%H:%M"), post_data["datetime_end"])
 
     def test_get_booking_page(self):
         self.trainer_schedule = trainer.models.TrainerSchedule.objects.create(trainer=self.trainer_user,

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}Service Edit Page{% endblock %}
+
+{% block content %}
+
+        <form method="POST" action="{% url 'trainer:edit_trainer_service' trainer_id=trainer_id service_id=service_id %}">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Submit</button>
+        </form>
+
+{% endblock %}

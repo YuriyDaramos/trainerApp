@@ -13,59 +13,39 @@
         {% for service in trainer_services %}
             <br>Category: {{ service.category.name }}
             <br>Price: {{ service.price }} USD
-            <br>Duration: {{ service.duration }} (hh:mm:ss)
+            <br>Duration: {{ service.duration }}
             <br>Level: {{ service.level }}
+                {% if trainer_id == request.user.id %}
+                    <br><a href="{% url 'trainer:edit_trainer_service' trainer_id=trainer_id  service_id=service.id%}">...Edit</a>
+                {% endif %}
                 {% if not is_trainer %}
                     <br><a href="{% url 'trainer:book_service' trainer_id=trainer_id service_id=service.id %}">Book</a>
-                {% endif %}
-
-                {% if is_trainer and trainer_id == request.user.id %}
-                    <form action="{% url 'trainer:trainer_detail' trainer_id=trainer_id %}" method="POST">
-                        {% csrf_token %}
-                        <input type="hidden" name="service_id" value="{{ service.id }}">
-                        <button type="submit" class="btn btn-danger">Delete Service</button>
-                    </form>
                 {% endif %}
             <br>-------------------------
         {% endfor %}
 
     {% if is_trainer %}
-        <br><h2>Add Trainer Service</h2>
-
-        <form action="{% url 'trainer:service_page' trainer_id=trainer_id %}" method="POST">
+        <form action="{% url 'trainer:add_trainer_service' trainer_id=trainer_id %}" method="POST">
+            <h2>Add New Service</h2>
             {% csrf_token %}
-            <div>
-                <br>Category:
-                    <select name="category">
-                        {% for category in service_categories %}
-                            <option value="{{ category.id }}">{{ category.name }}</option>
-                        {% endfor %}
-                    </select>
-                <br><br>Duration (minutes): <input type="text" name="duration">
-                <br>Price (USD): <input type="number" name="price">
-                <br>Level: <select name="level">
-                    <option value="1">Novice</option>
-                    <option value="2">Medium</option>
-                    <option value="3">Advanced</option>
-                    </select>
-                <br><button type="submit">Submit</button>
-            </div>
+            {{ form_add_service.as_p }}
+            <button type="submit">Submit</button>
+        </form>
+
+
+        <form action="{% url 'trainer:set_working_hours' trainer_id=trainer_id %}" method="POST">
+            <h2>Set Working Hours</h2>
+            {% csrf_token %}
+            {{ form_set_working_hours.as_p }}
+            <button type="submit">Submit</button>
+        </form>
+
+
+        <form action="{% url 'trainer:set_trainer_description' trainer_id=trainer_id %}" method="POST">
+            <h2>Set My Description</h2>
+            {% csrf_token %}
+            {{ form_set_description.as_p }}
+            <button type="submit">Submit</button>
         </form>
     {% endif %}
-
-    {% if is_trainer %}
-        <br><h2>Add Trainer Working Hours</h2>
-
-        <form action="{% url 'trainer:service_page' trainer_id=trainer_id %}" method="POST">
-            {% csrf_token %}
-            <div>
-                <br>Start Date & Time:
-                <input type="datetime-local" name="start_datetime">
-                <br>End Date & Time:
-                <input type="datetime-local" name="end_datetime">
-                <br><button type="submit">Submit</button>
-            </div>
-        </form>
-    {% endif %}
-
 {% endblock %}
