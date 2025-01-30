@@ -43,7 +43,6 @@ def booking_time_discovery(trainer_id, service_id, date):
         current_start = schedule_start
         while current_start + search_window <= schedule_end:
             current_end = current_start + search_window
-            current_end = timezone.make_naive(current_end)
             if current_end <= current_time:
                 current_start += timedelta(minutes=timestep)
                 continue
